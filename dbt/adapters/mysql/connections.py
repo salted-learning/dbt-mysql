@@ -1,7 +1,13 @@
 from dataclasses import dataclass
+from contextlib import contextmanager
+import agate
+from typing import Optional
 
+import dbt.exceptions
 from dbt.adapters.base import Credentials
 from dbt.adapters.sql import SQLConnectionManager
+from dbt.helper_types import Port
+from dbt.logger import GLOBAL_LOGGER as logger
 
 import mysql.connector
 
@@ -33,9 +39,19 @@ MYSQL_CREDENTIALS_CONTRACT = {
 
 @dataclass
 class MySQLCredentials(Credentials):
-    SCHEMA = MYSQL_CREDENTIALS_CONTRACT
-    ALIASES = {
-        'schema': 'database'
+    # TODO: in mysql, schema == database. but they're both required in Credentials.
+    # need to figure out how to override that. for now, i'm adding both to my profile
+    host: str
+    database: str
+    username: str
+    password: str
+    port: Optional[Port] = 3306
+
+    _ALIASES = {
+        # 'schema': 'database',
+        'dbname': 'database',
+        'pass': 'password',
+        'user': 'username'
     }
 
     @property
@@ -60,18 +76,18 @@ class MySQLConnectionManager(SQLConnectionManager):
         try:
             conn = mysql.connector.connect(
                 host=credentials.host,
-                port=credentials.get('port', 3306),
+                port=credentials.port,
                 database=credentials.database,
                 user=credentials.username,
                 password=credentials.password
             )
             connection.state = 'open'
             connection.handle = conn
-        except:
+        except Exception as e:
             # TODO: enumerate the exceptions, add any specific handling
             connection.state = 'fail'
             connection.handle = None
-            raise dbt.exceptions.FailedToConnectException()
+            raise dbt.exceptions.FailedToConnectException(e) from e
             
         return connection
 
@@ -100,6 +116,6 @@ class MySQLConnectionManager(SQLConnectionManager):
         except Exception as e:
             logger.debug(f'Error running SQL: {sql}')
             logger.debug(f'Rolling back transaction')
-            self.release(connection_name)
-            raise dbt.exceptions.RuntimeException(str(e))
+            self.release()
+            raise dbt.exceptions.RuntimeException(e) from e
 

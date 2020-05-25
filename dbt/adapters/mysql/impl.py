@@ -1,9 +1,13 @@
+import agate
+
 from dbt.adapters.sql import SQLAdapter
 from dbt.adapters.mysql import MySQLConnectionManager
+from dbt.adapters.mysql.relation import MySQLRelation
 
 
 class MySQLAdapter(SQLAdapter):
     ConnectionManager = MySQLConnectionManager
+    Relation = MySQLRelation
 
     @classmethod
     def date_function(cls):
@@ -22,3 +26,6 @@ class MySQLAdapter(SQLAdapter):
             cls, agate_table: agate.Table, col_idx: int
     ) -> str:
         return "datetime"
+
+    def quote(self, identifier):
+        return '`{}`'.format(identifier)
