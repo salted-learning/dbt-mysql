@@ -32,17 +32,12 @@
     select
       '{{ information_schema.database }}' as "database",
       table_name as name,
-      table_schema as "schema",
-      'table' as type
+      null as "schema",
+      case
+        when table_type = 'BASE TABLE' then 'table'
+        when table_type = 'VIEW' then 'view'
+      end as type
     from information_schema.tables
-    where lower(table_schema) like '{{ information_schema.database }}'
-    union all
-    select
-      '{{ information_schema.database }}' as "database",
-      table_name as name,
-      table_schema as "schema",
-      'view' as type
-    from information_schema.views
     where lower(table_schema) like '{{ information_schema.database }}'
   {% endcall %}
   {{ return(load_result('list_relations_without_caching').table) }}
@@ -66,4 +61,12 @@
   as (
     {{ sql }}
   );
+{% endmacro %}
+
+
+{% macro mysql__rename_relation(from_relation, to_relation) -%}
+  {% set target_name = adapter.quote_as_configured(to_relation.identifier, 'identifier') %}
+  {% call statement('rename_relation') -%}
+    rename table {{ from_relation }} to {{ target_name }}
+  {%- endcall %}
 {% endmacro %}
