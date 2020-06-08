@@ -99,6 +99,7 @@ class MySQLConnectionManager(SQLConnectionManager):
         return 'OK'
 
     def cancel(self, connection):
+        # TODO: mysql doesn't support query cancellation mid-way through, dbt docs mention care with this method
         connection_id = connection.handle.connection_id
 
         # "kill query" kills the running statement, but leaves the connection
