@@ -83,3 +83,26 @@
   {% endcall %}
 
 {% endmacro %}
+
+
+{% macro mysql__truncate_relation(relation) -%}
+  {% call statement('truncate_relation') -%}
+    truncate table {{ relation }}
+  {%- endcall %}
+{% endmacro %}
+
+
+{% macro mysql__get_columns_in_relation(relation) -%}
+  {{ exceptions.raise_not_implemented(
+    'get_columns_in_relation macro not implemented for adapter '+adapter.type()) }}
+{% endmacro %}
+
+
+{% macro mysql__check_schema_exists(information_schema, schema) -%}
+  {% set sql -%}
+        select count(*)
+        from {{ information_schema.replace(information_schema_view='SCHEMATA') }}
+        where schema_name='{{ schema }}'
+  {%- endset %}
+  {{ return(run_query(sql)) }}
+{% endmacro %}

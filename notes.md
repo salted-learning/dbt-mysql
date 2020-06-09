@@ -6,6 +6,6 @@ Macros List:
 * ~~list_relations_without_caching (required)~~ 
 * ~~list_schemas~~
 * ~~rename_relation~~
-* truncate_relation
-* get_columns_in_relation (required)
-* check_schema_exists
+* ~~truncate_relation~~
+* ~~get_columns_in_relation (required)~~
+* ~~check_schema_exists~~
