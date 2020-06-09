@@ -72,7 +72,7 @@
 {% endmacro %}
 
 
-{% macro default__alter_column_type(relation, column_name, new_column_type) -%}
+{% macro mysql__alter_column_type(relation, column_name, new_column_type) -%}
   {%- set tmp_column = column_name + "__dbt_alter" -%}
 
   {% call statement('alter_column_type') %}
