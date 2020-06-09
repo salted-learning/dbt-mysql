@@ -101,8 +101,9 @@ class MySQLConnectionManager(SQLConnectionManager):
     def cancel(self, connection):
         connection_id = connection.handle.connection_id
 
-        # "kill query" kills the running statement, but leaves the connection
-        sql = f'kill query {connection_id}'
+        # below is for RDS MySQL, equivalent to "kill query"
+        # kills the running statement, but leaves the connection
+        sql = f'call mysql.rds_kill({connection_id})'
         logger.debug(f'Cancelling query on connection_id {connection_id}')
         _, cursor = self.add_query(sql, 'master')
         res = cursor.fetchone()
