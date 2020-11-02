@@ -85,19 +85,6 @@
 {% endmacro %}
 
 
-{% macro mysql__truncate_relation(relation) -%}
-  {% call statement('truncate_relation') -%}
-    truncate table {{ relation }}
-  {%- endcall %}
-{% endmacro %}
-
-
-{% macro mysql__get_columns_in_relation(relation) -%}
-  {{ exceptions.raise_not_implemented(
-    'get_columns_in_relation macro not implemented for adapter '+adapter.type()) }}
-{% endmacro %}
-
-
 {% macro mysql__check_schema_exists(information_schema, schema) -%}
   {% set sql -%}
         select count(*)
@@ -106,3 +93,43 @@
   {%- endset %}
   {{ return(run_query(sql)) }}
 {% endmacro %}
+
+
+{% macro mysql__truncate_relation(relation) -%}
+  {% call statement('truncate_relation') -%}
+    truncate table {{ relation }}
+  {%- endcall %}
+{% endmacro %}
+
+
+{% macro mysql__get_columns_in_relation(relation) -%}
+  {% call statement('get_columns_in_relation', fetch_result=True) %}
+      select
+          column_name,
+          data_type,
+          character_maximum_length,
+          numeric_precision,
+          numeric_scale
+      from information_schema.columns
+      where table_name = '{{ relation.identifier }}'
+        {% if relation.schema %}
+        and table_schema = '{{ relation.schema }}'
+        {% endif %}
+      order by ordinal_position
+
+  {% endcall %}
+  {% set table = load_result('get_columns_in_relation').table %}
+  {{ return(sql_convert_columns_in_relation(table)) }}
+{% endmacro %}
+
+
+{% macro mysql__make_temp_relation(base_relation, suffix) %}
+    {% set tmp_identifier = "temp_" ~ base_relation.identifier %}
+    {% set tmp_relation = base_relation.incorporate(
+                                path={"identifier": tmp_identifier}) -%}
+	
+	create temp
+	
+    {% do return(tmp_relation) %}
+{% endmacro %}
+
